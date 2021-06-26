@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 public class NewMapGenerator : MonoBehaviour
 {
     float timer;
+    public int scaleupmult;
     enum MapGeneratorState
     {
         INIT,
@@ -14,75 +15,96 @@ public class NewMapGenerator : MonoBehaviour
         FINISH
     }
 
-    public class Map
+    public enum Direction
     {
-        public enum Direction
+        NORTH,
+        SOUTH,
+        EAST,
+        WEST
+    }
+
+    public class NodeEntrance
+    {
+
+        public int x;
+        public int y;
+
+        public Direction direction;
+
+        public NodeEntrance(int x_, int y_, Direction d_)
         {
-            NORTH,
-            SOUTH,
-            EAST,
-            WEST
+            x = x_;
+            y = y_;
+            direction = d_;
         }
+    }
 
-        public class NodeEntrance
+    public class Edge
+    {
+        public Vector2Int start;
+        public Vector2Int end;
+        public int thickness;
+
+        public Edge(Vector2Int start_, Vector2Int end_, int thickness_)
         {
-
-            public int x;
-            public int y;
-
-            public Direction direction;
-
-            public NodeEntrance(int x_, int y_, Direction d_)
-            {
-                x = x_;
-                y = y_;
-                direction = d_;
-            }
+            start = start_;
+            end = end_;
+            thickness = thickness_;
         }
+    }
 
-        public class Node
+    public class Node
+    {
+        public int x;
+        public int y;
+        public int w;
+        public int h;
+
+        public List<NodeEntrance> entrances;
+
+        public List<Vector2Int> edges;
+
+        public List<Node> connections;
+
+        public Node(int x_, int y_, int w_, int h_)
         {
-            public int x;
-            public int y;
-            public int w;
-            public int h;
+            x = x_;
+            y = y_;
+            w = w_;
+            h = h_;
 
-            public List<NodeEntrance> entrances;
+            entrances = new List<NodeEntrance>();
 
-            public List<Vector2Int> edges;
+            edges = new List<Vector2Int>();
 
-            public Node(int x_, int y_, int w_, int h_)
+            connections = new List<Node>();
+
+
+            for (int i = 0; i < w; i++)
             {
-                x = x_;
-                y = y_;
-                w = w_;
-                h = h_;
-
-                entrances = new List<NodeEntrance>();
-
-                edges = new List<Vector2Int>();
-
-                for (int i = 0; i < w; i++)
+                if (i == 0 || i == w - 1)
                 {
-                    if (i == 0 || i == w - 1)
+                    for (int j = 0; j < h; j++)
                     {
-                        for (int j = 0; j < h; j++)
-                        {
-                            edges.Add(new Vector2Int(i, j));
-                        }
+                        edges.Add(new Vector2Int(i, j));
                     }
-                    else
-                    {
-                        edges.Add(new Vector2Int(i, 0));
-                        edges.Add(new Vector2Int(i, h - 1));
-                    }
-
-
+                }
+                else
+                {
+                    edges.Add(new Vector2Int(i, 0));
+                    edges.Add(new Vector2Int(i, h - 1));
                 }
 
-                return;
+
             }
+
+
         }
+    }
+
+    public class Map
+    {
+        
 
         public int w;
         public int h;
@@ -90,13 +112,27 @@ public class NewMapGenerator : MonoBehaviour
         public int offsety;
         public int[,] cells;
         List<Node> rooms;
+        Dictionary<GameObject, Node> roomtonodemappings;
+        public Node GetCorrespondingNode(GameObject g_)
+        {
+            Node n_;
+            if (roomtonodemappings.TryGetValue(g_, out n_)) return n_;
+            else
+            {
+                Debug.Log("Cannot retrieve node");
+                return null;
+            }
+            //return roomtonodemappings[g_];
+        }
 
-        //public Vector2Int start;
-        //public Vector2Int end;
-        //public int mincellw;
-        //public int mincellh;
-        //public int maxcellw;
-        //public int maxcellh;
+        //PATHS
+        public Vector2Int start;
+        public Vector2Int end;
+
+        public int mincellw;
+        public int mincellh;
+        public int maxcellw;
+        public int maxcellh;
 
 
         Vector2Int diffendstart;
@@ -158,6 +194,12 @@ public class NewMapGenerator : MonoBehaviour
             offsety = offsety_;
             cells = new int[w, h];
             rooms = new List<Node>();
+            roomtonodemappings = new Dictionary<GameObject, Node>();
+
+            mincellw = 2;
+            mincellh = 2;
+            maxcellw = 2;
+            maxcellh = 2;
 
             for (int i = 0; i < w; i++)
             {
@@ -168,29 +210,29 @@ public class NewMapGenerator : MonoBehaviour
             }
         }
 
-        //public bool CanPlaceGenuineRoom()
-        //{
-        //    //Create the node based on minimum and maximum dimensions or the remaining size if about to reach the end cell
-        //    remhor = (w - 1 - startposnextnode.x);
-        //    remver = (h - 1 - startposnextnode.y);
-        //    return ((remhor >= mincellw) || (remver >= mincellh));
-        //}
+        public bool CanPlaceGenuineRoom()
+        {
+            //Create the node based on minimum and maximum dimensions or the remaining size if about to reach the end cell
+            remhor = (w - 1 - startposnextnode.x);
+            remver = (h - 1 - startposnextnode.y);
+            return ((remhor >= mincellw) || (remver >= mincellh));
+        }
 
-        //public void CreateCurrentNode()
-        //{
-        //    if (CanPlaceGenuineRoom())
-        //    {
-        //        //the minimum sized room is NOT too big for the grid - proceed normally 
-        //        current = new Node(startposnextnode.x, startposnextnode.y, Random.Range(mincellw, Mathf.Min(maxcellw, remhor) + 1), Random.Range(mincellh, Mathf.Min(maxcellh, remver) + 1));
-        //    }
-        //    else
-        //    {
-        //        //the minimum sized room IS too big for the grid - construct a smaller room using the remaining cells
-        //        current = new Node(startposnextnode.x, startposnextnode.y, remhor, remver);
-        //    }
+        public void CreateCurrentNode()
+        {
+            if (CanPlaceGenuineRoom())
+            {
+                //the minimum sized room is NOT too big for the grid - proceed normally 
+                current = new Node(startposnextnode.x, startposnextnode.y, Random.Range(mincellw, Mathf.Min(maxcellw, remhor) + 1), Random.Range(mincellh, Mathf.Min(maxcellh, remver) + 1));
+            }
+            else
+            {
+                //the minimum sized room IS too big for the grid - construct a smaller room using the remaining cells
+                current = new Node(startposnextnode.x, startposnextnode.y, remhor, remver);
+            }
 
-        //    rooms.Add(current);
-        //}
+            rooms.Add(current);
+        }
 
         public void UpdateCellMatrixForCurrent()
         {
@@ -199,66 +241,94 @@ public class NewMapGenerator : MonoBehaviour
             {
                 for (int j = current.y; j < current.y + current.h; j++)
                 {
-                    Debug.Log("Setting " + i + " " + j);
+                    //Debug.Log("Setting " + i + " " + j);
                     cells[i, j] = 1;
                 }
             }
         }
 
-        //public void UpdateStartPosNextNode(int linearity_)
-        //{
-        //    int chance = Random.Range(1, 101);
-            
+        public void UpdateStartPosNextNode(int linearity_)
+        {
+            int chance = Random.Range(1, 101);
 
-        //    //calculate vector subtraction from end to start to determine whether further vertically or horizontally from end room
-        //    diffendstart = end - startposnextnode;
+            //calculate vector subtraction from end to start to determine whether further vertically or horizontally from end room
+            diffendstart = end - startposnextnode;
 
-        //    //calculate the next node
-        //    //determine if distance from end node is greater vertically or horizontally
-        //    if (diffendstart.y > diffendstart.x)
-        //    {
-        //        //startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
+            //calculate the next node
+            //determine if distance from end node is greater vertically or horizontally
+            if (diffendstart.y > diffendstart.x)
+            {
+                //startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
 
-        //        if (chance <= linearity_)
-        //        {
-        //            startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
-        //            //current.entrances.Add(new NodeEntrance(startposnextnode.x, startposnextnode.y - 1, Direction.NORTH));
-        //        }
-        //        else
-        //        {
-        //            startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        //startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
+                if (chance <= linearity_)
+                {
+                    startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
+                    //current.entrances.Add(new NodeEntrance(startposnextnode.x, startposnextnode.y - 1, Direction.NORTH));
+                }
+                else
+                {
+                    startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
+                }
+            }
+            else
+            {
+                //startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
 
-        //        if (chance > linearity_)
-        //        {
-        //            startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
-        //        }
-        //        else
-        //        {
-        //            startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
-        //        }
-        //    }
-        //}
+                if (chance > linearity_)
+                {
+                    startposnextnode = new Vector2Int(Random.Range(current.x, current.x + current.w), current.y + current.h);
+                }
+                else
+                {
+                    startposnextnode = new Vector2Int(current.x + current.w, Random.Range(current.y, current.y + current.h));
+                }
+            }
+        }
 
-        //public void GeneratePath(int linearity_)
-        //{
-            
-        //    current = null;
-        //    startposnextnode = start;
+        public void GeneratePath(Node room1, Node room2, int linearity_)
+        {
+            current = null;
+            startposnextnode = new Vector2Int((room1.x + room1.x + room1.w)/2, (room1.y + room1.y + room1.h) / 2);
+            end = new Vector2Int((room2.x + room2.x + room2.w) / 2, (room2.y + room2.y + room2.h) / 2);
 
-        //    while (current == null || ((current.x + current.w) < end.x && (current.y + current.h) < end.y) )
-        //    {
-        //        CreateCurrentNode();
-        //        UpdateCellMatrixForCurrent();
-        //        UpdateStartPosNextNode(linearity_);
-        //    }
+            if (end.x >= start.x && end.y >= start.y)
+            {
+                while (current == null || ((current.x + current.w) < end.x && (current.y + current.h) < end.y))
+                {
+                    CreateCurrentNode();
+                    UpdateCellMatrixForCurrent();
+                    UpdateStartPosNextNode(linearity_);
+                }
+            }
+        }
 
-        //    Debug.Log("Number of rooms = " + rooms.Count);
-        //}
+        public void UpdateCellMatrixWithEdge(Edge e)
+        {
+            //y = mx + b
+            int m = 0;
+            int b = 0;
+
+            if ((e.end.y - e.start.y) == 0) return; //incase denominator = 0;
+            else Debug.Log("Drawing edge " + e.start + " to " + e.end);
+            m = (e.end.x - e.start.x) / (e.end.y - e.start.y);
+            b = e.start.y - m * e.start.x;
+
+            int x_, y_;
+
+            for (int i = e.start.x; i <= e.end.x; i++ )
+            {
+                x_ = i;
+                y_ = m * x_ + b;
+                Debug.Log(i + ": Line for " + e.start + " to " + e.end + " : " + x_ + ", " + y_);
+                for (int t = x_; t < x_ + e.thickness; t++)
+                {
+                    for (int u = y_; u < y_ + e.thickness; u++)
+                    {
+                        cells[t, u] = 1;
+                    }
+                }
+            }
+        }
 
         public void GenerateCells(List<GameObject> rooms_)
         {
@@ -271,14 +341,20 @@ public class NewMapGenerator : MonoBehaviour
                 //confirm variables for current room node
                 x_ = (int)(g_.transform.position.x) + offsetx + 1;
                 y_ = (int)(g_.transform.position.y) + offsety + 1;
-                w_ = (int)(g_.transform.localScale.x);
-                h_ = (int)(g_.transform.localScale.y);
+                w_ = (int)(g_.transform.localScale.x) * 8;
+                h_ = (int)(g_.transform.localScale.y) * 8;
 
-                Debug.Log("Creating " + w_ + " " + h_ + " at " + x_ + " " + y_ + " for " + g_.GetComponent<Transform>().position);
+                x_ *= 16;
+                y_ *= 16;
+
+                
 
                 //create the current room node object
                 current = new Node(x_, y_, w_, h_);
                 rooms.Add(current);
+                
+                roomtonodemappings[g_] = current;
+                Debug.Log("Creating " + w_ + " " + h_ + " at " + x_ + " " + y_ + " for " + g_.GetComponent<Transform>().position + " mapping: " + roomtonodemappings[g_]);
                 UpdateCellMatrixForCurrent();
             }
         }
@@ -306,20 +382,54 @@ public class NewMapGenerator : MonoBehaviour
             {
                 if (map.cells[i, j] == 1)
                 {
-                    Debug.Log("Setting " + i.ToString() + " " + j.ToString());
+                    //Debug.Log("Setting " + i.ToString() + " " + j.ToString());
                     thetilemap.SetTile(new Vector3Int(i, j, 0), ruletile1);
                 }
             }
         }
     }
 
-    //public void CreatePath()
-    //{
-    //    Map map = new Map(32, 32, 3, 3, 5, 5);
-    //    map.GeneratePath(linearity);
-    //    //modify cells on tilemap with value 1
-    //    DrawTiles(map);
-    //}
+    public void CreatePaths()
+    {
+        Debug.Log("Ok so number of boxes: " + boxes.Count);
+        foreach (GameObject box in boxes)
+        {
+            RoomSimulator boxsim = box.GetComponent<RoomSimulator>();
+            Debug.Log(boxsim);
+            foreach (RoomSimulator r_ in boxsim.neighbours)
+            {
+                
+                if (!boxsim.connections.Contains(r_) && !r_.connections.Contains(boxsim))
+                {
+                    Debug.Log("Neighbour " + r_);
+                    ////m_Map.GeneratePath()
+                    ////Vector2Int pathstart = new Vector2Int((room1.x + room1.x + room1.w) / 2, (room1.y + room1.y + room1.h) / 2);
+                    ////Vector2Int pathend = new Vector2Int((room2.x + room2.x + room2.w) / 2, (room2.y + room2.y + room2.h) / 2);
+                    ////Debug.Log("G.O. : " + r_.gameObject);
+                    Node node1 = m_Map.GetCorrespondingNode(box);
+                    Node node2 = m_Map.GetCorrespondingNode(r_.gameObject); //why does .GetComponent<GameObject>() not work???
+
+                    Edge e_ = new Edge(new Vector2Int(node1.x, node1.y), new Vector2Int(node2.x, node2.y), 1);
+
+                    Debug.Log("Created an edge from " + node1.x + " " + node1.y + " to " + node2.x + " " + node2.y);
+
+                    m_Map.UpdateCellMatrixWithEdge(e_);
+
+                    ////m_Map.GeneratePath(node1, node2, 50);
+
+                    node1.connections.Add(node2);
+                    node2.connections.Add(node1);
+                }
+            }
+
+            //DrawTiles(m_Map);
+        }
+        
+
+        //foreach (RoomSimulator room in )
+        //modify cells on tilemap with value 1
+        //DrawTiles(m_Map);
+    }
 
     public int mincellw;
     public int mincellh;
@@ -328,6 +438,7 @@ public class NewMapGenerator : MonoBehaviour
     public int mincelldimsdiff;
     public int maxcelldimsdiff;
     public int numrooms;
+
     public List<GameObject> boxes;
 
     //private variables
@@ -336,21 +447,20 @@ public class NewMapGenerator : MonoBehaviour
     public void CreateRoomSimulators()
     {
         boxes = new List<GameObject>();
+        
 
         int x;
         int y;
         int w;
         int h;
 
-        
-
         for (int i = 0; i < numrooms; i++)
         {
             //instantiate the box and update its properties appropriately
             GameObject g_ = Instantiate(box);
             boxes.Add(g_);
-            x = Random.Range(0, mapwidth);
-            y = Random.Range(0, mapheight);
+            x = Random.Range(0, mapwidth/2);
+            y = Random.Range(0, mapheight/2);
             w = Random.Range(mincellw, maxcellw);
             h = Random.Range(Mathf.Max(mincellh, w + mincelldimsdiff), Mathf.Min(maxcellh, w + maxcelldimsdiff));
 
@@ -380,8 +490,8 @@ public class NewMapGenerator : MonoBehaviour
 
         foreach (GameObject g_ in boxes)
         {
-            x = (int)g_.transform.position.x;
-            y = (int)g_.transform.position.x;
+            x = (int)g_.transform.position.x ;
+            y = (int)g_.transform.position.y ;
 
 
             if (x > maxx) maxx = x;
@@ -397,9 +507,13 @@ public class NewMapGenerator : MonoBehaviour
 
     public bool AreAllBoxesReady()
     {
-        if (timer > 5f) return true;
+        if (timer > 3f) return true;
         else return false;
 
+        /*
+         * Should return true if boxes' velocity slows to a certain level
+         * For some reason it's not correctly so I am hacking it with the timer variable
+         */
         //if (boxes.Count == numrooms)
         //{
         //    int cnt = 0;
@@ -431,7 +545,7 @@ public class NewMapGenerator : MonoBehaviour
         int h_ = maxy - miny;
         int w_ = maxx - minx;
 
-        m_Map = new Map(w_ * 2, h_ * 2, 0-minx, 0-miny, mincellw, mincellh, maxcellw, maxcellh);
+        m_Map = new Map(w_ * scaleupmult, h_ * scaleupmult, 0-minx, 0-miny, mincellw, mincellh, maxcellw, maxcellh);
 
         Debug.Log("Map created: " + m_Map.w + " " +  m_Map.h);
 
@@ -443,14 +557,17 @@ public class NewMapGenerator : MonoBehaviour
     public void Start()
     {
         timer = 0.0f;
+        scaleupmult = 40;
         m_State = MapGeneratorState.INIT;
+
         boxes = new List<GameObject>();
         
+
     }
 
     private void Update()
     {
-        timer += Time.deltaTime;
+        if (timer < 3f) timer += Time.deltaTime;
 
         switch (m_State)
         {
@@ -464,10 +581,20 @@ public class NewMapGenerator : MonoBehaviour
             {
                 if (AreAllBoxesReady())
                 {
+                    //Create the rooms
                     Debug.Log("Proceeding");
                     UpdateMinMaxXY();
                     CreateCellMatrix();
+
+                    Debug.Log("Finished creating the rooms mate");
+                    //Create paths between rooms
+                    CreatePaths();
+
+                    //Actually draw the tiles
                     DrawTiles(m_Map);
+                    
+
+                    //Update MapGenerator State
                     m_State = MapGeneratorState.FINISH;
                 }
                 break;

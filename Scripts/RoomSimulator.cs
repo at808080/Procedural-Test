@@ -14,7 +14,10 @@ public class RoomSimulator : MonoBehaviour
     public Vector2 vel;
     public BoxCollider2D collider;
     public BoxCollider2D trigger;
+
     public List<RoomSimulator> neighbours;
+    public List<RoomSimulator> connections;
+
     public bool triggering;
     RoomSimulatorState m_State;
     // Start is called before the first frame update
@@ -22,7 +25,10 @@ public class RoomSimulator : MonoBehaviour
     {
         m_State = RoomSimulatorState.INIT;
         v_ = GetComponent<Transform>().position;
+
         neighbours = new List<RoomSimulator>();
+        connections = new List<RoomSimulator>();
+
         BoxCollider2D[] cols = gameObject.GetComponents<BoxCollider2D>();
         foreach (BoxCollider2D b_ in cols)
         {
