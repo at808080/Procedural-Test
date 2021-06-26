@@ -308,9 +308,9 @@ public class NewMapGenerator : MonoBehaviour
             int m = 0;
             int b = 0;
 
-            if ((e.end.y - e.start.y) == 0) return; //incase denominator = 0;
+            if ((e.end.x - e.start.x) == 0) return; //incase denominator = 0;
             else Debug.Log("Drawing edge " + e.start + " to " + e.end);
-            m = (e.end.x - e.start.x) / (e.end.y - e.start.y);
+            m = (e.end.y - e.start.y) / (e.end.x - e.start.x);
             b = e.start.y - m * e.start.x;
 
             int x_, y_;
@@ -319,6 +319,7 @@ public class NewMapGenerator : MonoBehaviour
             {
                 x_ = i;
                 y_ = m * x_ + b;
+                Debug.Log("Calc y_: " + m + "*" + x_ + "+" + b);
                 Debug.Log(i + ": Line for " + e.start + " to " + e.end + " : " + x_ + ", " + y_);
                 for (int t = x_; t < x_ + e.thickness; t++)
                 {
@@ -344,8 +345,8 @@ public class NewMapGenerator : MonoBehaviour
                 w_ = (int)(g_.transform.localScale.x) * 8;
                 h_ = (int)(g_.transform.localScale.y) * 8;
 
-                x_ *= 16;
-                y_ *= 16;
+                x_ *= 12;
+                y_ *= 12;
 
                 
 
@@ -409,7 +410,7 @@ public class NewMapGenerator : MonoBehaviour
                     Node node1 = m_Map.GetCorrespondingNode(box);
                     Node node2 = m_Map.GetCorrespondingNode(r_.gameObject); //why does .GetComponent<GameObject>() not work???
 
-                    Edge e_ = new Edge(new Vector2Int(node1.x, node1.y), new Vector2Int(node2.x, node2.y), 1);
+                    Edge e_ = new Edge(new Vector2Int(node1.x+node1.w/2, node1.y+node1.h/2), new Vector2Int(node2.x+node2.w/2, node2.y+node2.h/2), 4);
 
                     Debug.Log("Created an edge from " + node1.x + " " + node1.y + " to " + node2.x + " " + node2.y);
 
@@ -459,8 +460,8 @@ public class NewMapGenerator : MonoBehaviour
             //instantiate the box and update its properties appropriately
             GameObject g_ = Instantiate(box);
             boxes.Add(g_);
-            x = Random.Range(0, mapwidth/2);
-            y = Random.Range(0, mapheight/2);
+            x = Random.Range(0, mapwidth/4);
+            y = Random.Range(0, mapheight/4);
             w = Random.Range(mincellw, maxcellw);
             h = Random.Range(Mathf.Max(mincellh, w + mincelldimsdiff), Mathf.Min(maxcellh, w + maxcelldimsdiff));
 

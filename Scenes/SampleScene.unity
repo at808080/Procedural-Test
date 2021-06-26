@@ -194,13 +194,13 @@ MonoBehaviour:
   ruletile1: {fileID: 11400000, guid: 7685dbe95357fdc40adf8886e5ae7c28, type: 2}
   box: {fileID: 496355193176910494, guid: 114a3b4b0ac49f449876caca0715e255, type: 3}
   linearity: 20
-  mincellw: 2
-  mincellh: 2
+  mincellw: 1
+  mincellh: 1
   maxcellw: 5
   maxcellh: 5
-  mincelldimsdiff: 1
-  maxcelldimsdiff: 3
-  numrooms: 10
+  mincelldimsdiff: 0
+  maxcelldimsdiff: 2
+  numrooms: 15
   boxes: []
 --- !u!1 &1710078011
 GameObject:
