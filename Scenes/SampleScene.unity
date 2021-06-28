@@ -186,9 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0351f00c1c726fc4ea292a27a5b5ead0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scaleupmult: 0
-  mapwidth: 20
-  mapheight: 20
+  scaleupmult: 10
   thetilemap: {fileID: 1710078014}
   tile1: {fileID: 11400000, guid: 267675f2804e8f94db22db4268ec63f4, type: 2}
   ruletile1: {fileID: 11400000, guid: 7685dbe95357fdc40adf8886e5ae7c28, type: 2}
@@ -201,7 +199,7 @@ MonoBehaviour:
   maxcellh: 4
   mincelldimsdiff: 1
   maxcelldimsdiff: 3
-  numrooms: 8
+  numrooms: 20
   boxes: []
 --- !u!1 &1710078011
 GameObject:

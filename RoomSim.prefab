@@ -147,6 +147,7 @@ MonoBehaviour:
   collider: {fileID: 0}
   trigger: {fileID: 0}
   neighbours: []
+  connections: []
   triggering: 1
 --- !u!61 &-7608399442009868662
 BoxCollider2D:
@@ -210,8 +211,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -474195429
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_Sprite: {fileID: 4521993590049302200, guid: a46da3430ea2aa54586e4c91cec0b350,
     type: 3}
