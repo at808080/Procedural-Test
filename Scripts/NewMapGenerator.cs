@@ -236,13 +236,62 @@ public class NewMapGenerator : MonoBehaviour
 
         public void UpdateCellMatrixForCurrent()
         {
+
+            ////mark all cells occupied by the current room node as 1
+            //for (int i = current.x; i < current.x + current.w; i++)
+            //{
+            //    for (int j = current.y; j < current.y + current.h; j++)
+            //    {
+            //        //Debug.Log("Setting " + i + " " + j);
+            //        cells[i, j] = 1;
+            //    }
+            //}
+
+
+            /*Method 1 : Do walls and floors separately*/
+
+            int padding = 12;
             //mark all cells occupied by the current room node as 1
+            //for (int i = current.x + padding; i < current.x + current.w - padding; i++)
+            //{
+            //    for (int j = current.y + padding; j < current.y + current.h - padding; j++)
+            //    {
+            //        //Debug.Log("Setting " + i + " " + j);
+            //        cells[i, j] = 1;
+            //    }
+            //}
+
+            //Walls / borders
+            int xxx = current.x + current.w;
+            int yyy = current.y + current.h;
+            int xx = current.x + padding;
+            int xy = current.x + current.w - padding;
+            int yx = current.y + current.h - padding;
+            int yy = current.y + padding;
+            //for (int i = current.x; i < current.x + current.w; i++)
+            //{
+            //    for (int j = current.y; j < current.y + current.h; j++)
+            //    {
+            //        //Debug.Log("Setting " + i + " " + j);
+            //        if ( (i < xx || (i > xy && i < xxx))  && (j < yy || (j > yx && j < yyy)) ) cells[i, j] = 2;
+            //    }
+            //}
+
+            /*Method 2 : Do walls and floors in the same loop*/
             for (int i = current.x; i < current.x + current.w; i++)
             {
-                for (int j = current.y; j < current.y + current.h; j++)
+                for (int j = 0; j < current.y + current.h; j++)
                 {
-                    //Debug.Log("Setting " + i + " " + j);
-                    cells[i, j] = 1;
+                    if (i >= xx && i < xy && j > yy && j < yx)
+                    {
+                        //apply a floor tile
+                        cells[i, j] = 1;
+                    }
+                    else if (i >= xx-2 && i < xy+2 && j > yy-2 && j < yx+2)
+                    {
+                        //apply a wall tile
+                        cells[i, j] = 2;
+                    }
                 }
             }
         }
@@ -333,31 +382,58 @@ public class NewMapGenerator : MonoBehaviour
 
         public void GenerateCells(List<GameObject> rooms_)
         {
-            
             current = null;
             int x_, y_, w_, h_;
+            //foreach (GameObject g_ in rooms_)
+            //{
+
+            //    //confirm variables for current room node
+            //    x_ = (int)(g_.transform.position.x) + offsetx + 1;
+            //    y_ = (int)(g_.transform.position.y) + offsety + 1;
+            //    w_ = (int)(g_.transform.localScale.x) * 8;
+            //    h_ = (int)(g_.transform.localScale.y) * 8;
+
+            //    x_ *= 12;
+            //    y_ *= 12;
+
+
+
+            //    //create the current room node object
+            //    current = new Node(x_, y_, w_, h_);
+            //    rooms.Add(current);
+
+            //    roomtonodemappings[g_] = current;
+            //    Debug.Log("Creating " + w_ + " " + h_ + " at " + x_ + " " + y_ + " for " + g_.GetComponent<Transform>().position + " mapping: " + roomtonodemappings[g_]);
+            //    UpdateCellMatrixForCurrent();
+            //}
+
             foreach (GameObject g_ in rooms_)
             {
-                
+
                 //confirm variables for current room node
-                x_ = (int)(g_.transform.position.x) + offsetx + 1;
-                y_ = (int)(g_.transform.position.y) + offsety + 1;
-                w_ = (int)(g_.transform.localScale.x) * 8;
-                h_ = (int)(g_.transform.localScale.y) * 8;
+                x_ = (int)(g_.transform.position.x) + offsetx /* + 1*/;
+                y_ = (int)(g_.transform.position.y) + offsety /*+ 1*/;
 
-                x_ *= 12;
-                y_ *= 12;
+                //Vector2 boxsize = g_.GetComponent<BoxCollider2D>().size;
 
-                
+                w_ = /*(int)(boxsize.x) * 10 ; */ (int)(g_.transform.localScale.x) * 20;
+                h_ = /*(int)(boxsize.y) * 10;  */ (int)(g_.transform.localScale.y) * 20;
+
+                x_ *= 20;
+                y_ *= 20;
+
+
 
                 //create the current room node object
                 current = new Node(x_, y_, w_, h_);
                 rooms.Add(current);
-                
+
                 roomtonodemappings[g_] = current;
                 Debug.Log("Creating " + w_ + " " + h_ + " at " + x_ + " " + y_ + " for " + g_.GetComponent<Transform>().position + " mapping: " + roomtonodemappings[g_]);
                 UpdateCellMatrixForCurrent();
             }
+
+
         }
     }
 
@@ -370,6 +446,7 @@ public class NewMapGenerator : MonoBehaviour
     [SerializeField] Tilemap thetilemap;
     [SerializeField] TileBase tile1;
     [SerializeField] RuleTile ruletile1;
+    [SerializeField] RuleTile ruletile2;
 
     [SerializeField] public GameObject box;
 
@@ -385,6 +462,15 @@ public class NewMapGenerator : MonoBehaviour
                 {
                     //Debug.Log("Setting " + i.ToString() + " " + j.ToString());
                     thetilemap.SetTile(new Vector3Int(i, j, 0), ruletile1);
+                    
+                }
+                else if (map.cells[i, j] == 2)
+                {
+                    thetilemap.SetTile(new Vector3Int(i, j, 0), ruletile2);
+                }
+                else if (map.cells[i, j] == 0)
+                {
+
                 }
             }
         }
@@ -410,7 +496,7 @@ public class NewMapGenerator : MonoBehaviour
                     Node node1 = m_Map.GetCorrespondingNode(box);
                     Node node2 = m_Map.GetCorrespondingNode(r_.gameObject); //why does .GetComponent<GameObject>() not work???
 
-                    Edge e_ = new Edge(new Vector2Int(node1.x+node1.w/2, node1.y+node1.h/2), new Vector2Int(node2.x+node2.w/2, node2.y+node2.h/2), 4);
+                    Edge e_ = new Edge(new Vector2Int(node1.x+node1.w/2, node1.y+node1.h/2), new Vector2Int(node2.x+node2.w/2, node2.y+node2.h/2), 2);
 
                     Debug.Log("Created an edge from " + node1.x + " " + node1.y + " to " + node2.x + " " + node2.y);
 

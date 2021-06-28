@@ -192,15 +192,16 @@ MonoBehaviour:
   thetilemap: {fileID: 1710078014}
   tile1: {fileID: 11400000, guid: 267675f2804e8f94db22db4268ec63f4, type: 2}
   ruletile1: {fileID: 11400000, guid: 7685dbe95357fdc40adf8886e5ae7c28, type: 2}
+  ruletile2: {fileID: 11400000, guid: 999ed3115e49b0348a9b160016c3b2f0, type: 2}
   box: {fileID: 496355193176910494, guid: 114a3b4b0ac49f449876caca0715e255, type: 3}
   linearity: 20
-  mincellw: 1
-  mincellh: 1
-  maxcellw: 5
-  maxcellh: 5
-  mincelldimsdiff: 0
-  maxcelldimsdiff: 2
-  numrooms: 15
+  mincellw: 2
+  mincellh: 2
+  maxcellw: 4
+  maxcellh: 4
+  mincelldimsdiff: 1
+  maxcelldimsdiff: 3
+  numrooms: 8
   boxes: []
 --- !u!1 &1710078011
 GameObject:
